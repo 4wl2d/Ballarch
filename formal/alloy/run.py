@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Run every command of an Alloy model and compare with its `expect` annotation.
+
+Usage:
+    python3 formal/alloy/run.py [--alloy PATH_TO_ALLOY_JAR] [--model FILE.als] [--out RESULTS.md]
+
+The Alloy 6 distribution jar (org.alloytools:org.alloytools.alloy.dist:6.2.0,
+SHA-1 f399311928e4e9f5cc8a6c09facc36c6dd4f4b9c) is not vendored. Pass its path
+with --alloy or set ALLOY_JAR; `formal/alloy/fetch-alloy.sh` downloads it.
+
+Exit status is 0 only when every command matches its expectation:
+    expect 0  -> no instance / no counterexample within the bounds
+    expect 1  -> an instance / a counterexample exists within the bounds
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+# Relations shown in compact traces (others are constant or noise).
+TRACE_RELATIONS = [
+    "this/Runtime<:status", "this/Call<:kind", "this/Call<:phase", "this/Call<:outcome",
+    "this/Created", "this/Awaiting", "this/ToSend", "this/LedgerDue", "this/InFlight",
+    "this/Responses", "this/SentOnce", "this/SentTwice", "this/Processed",
+    "this/AppliedOnce", "this/AppliedTwice",
+]
+
+COMMAND_RE = re.compile(
+    r"^\s*(check|run)\s+(\w+)\s*\{.*?\}\s*for\s+(.+?)\s+expect\s+([01])\s*$", re.MULTILINE
+)
+
+
+def parse_commands(model: str) -> list[dict]:
+    cmds = []
+    for m in COMMAND_RE.finditer(model):
+        cmds.append({"kind": m.group(1), "name": m.group(2), "scope": m.group(3), "expect": int(m.group(4))})
+    return cmds
+
+
+def compact_trace(text: str) -> str:
+    states = re.split(r"^------State (\d+(?: \(loop\))?)-------$", text, flags=re.MULTILINE)
+    out = []
+    prev: dict[str, str] = {}
+    # states[0] is the header; then pairs (index, body)
+    for i in range(1, len(states), 2):
+        idx, body = states[i], states[i + 1]
+        rels = {}
+        for line in body.splitlines():
+            if "=" in line:
+                k, v = line.split("=", 1)
+                if k in TRACE_RELATIONS:
+                    rels[k] = v.replace("$0", "0").replace("$1", "1").replace("$2", "2")
+        changed = {k: v for k, v in rels.items() if prev.get(k) != v}
+        prev = rels
+        parts = [f"{k.split('/')[-1].replace('Call<:', '').replace('Runtime<:', '')}={v}" for k, v in changed.items()]
+        out.append(f"  s{idx}: " + ("; ".join(parts) if parts else "(no change)"))
+    return "\n".join(out)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--alloy", default=os.environ.get("ALLOY_JAR", str(HERE / "alloy.jar")))
+    ap.add_argument("--model", default=str(HERE / "obligations.als"))
+    ap.add_argument("--out", default=str(HERE / "build" / "RESULTS.md"))
+    ap.add_argument("--command", default=None, help="run only this command")
+    args = ap.parse_args()
+
+    jar = Path(args.alloy)
+    if not jar.exists():
+        print(f"Alloy jar not found at {jar}. Run formal/alloy/fetch-alloy.sh or pass --alloy.", file=sys.stderr)
+        return 2
+    model_path = Path(args.model)
+    model = model_path.read_text(encoding="utf-8")
+    cmds = parse_commands(model)
+    if args.command:
+        cmds = [c for c in cmds if c["name"] == args.command]
+    if not cmds:
+        print("no commands with an `expect` annotation found", file=sys.stderr)
+        return 2
+
+    rows = []
+    failures = 0
+    traces = []
+    work = Path(tempfile.mkdtemp(prefix="alloy-"))
+    try:
+        for c in cmds:
+            outdir = work / c["name"]
+            t0 = time.monotonic()
+            proc = subprocess.run(
+                ["java", "-Djava.awt.headless=true", "-jar", str(jar), "exec", "-f", "-q", "-t", "text",
+                 "-c", c["name"], "-o", str(outdir), str(model_path)],
+                capture_output=True, text=True,
+            )
+            elapsed = time.monotonic() - t0
+            if proc.returncode != 0 or not (outdir / "receipt.json").exists():
+                print(proc.stdout, proc.stderr, sep="\n", file=sys.stderr)
+                rows.append((c, "ERROR", elapsed))
+                failures += 1
+                continue
+            sols = sorted(outdir.glob(f"{c['name']}-solution-*.txt"))
+            found = 1 if sols else 0
+            ok = found == c["expect"]
+            failures += 0 if ok else 1
+            rows.append((c, "PASS" if ok else "FAIL", elapsed, found))
+            if sols:
+                text = sols[0].read_text(encoding="utf-8")
+                traces.append((c["name"], compact_trace(text)))
+            print(f"{'PASS' if ok else 'FAIL'}  {c['kind']:5s} {c['name']:42s} expect={c['expect']} found={found}  {elapsed:6.1f}s", flush=True)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    version = subprocess.run(["java", "-jar", str(jar), "version"], capture_output=True, text=True).stdout.strip()
+    lines = [
+        "# Alloy results for `" + model_path.name + "`",
+        "",
+        "Generated by `formal/alloy/run.py`. Bounded analysis: a PASS for `expect 0` means no",
+        "counterexample exists **within the stated scope and trace length**, not a proof for all sizes.",
+        "",
+        f"- Alloy: `{version.splitlines()[-1] if version else 'unknown'}` (SAT4J, default symmetry breaking)",
+        f"- Model: `{model_path.relative_to(HERE.parent.parent) if HERE.parent.parent in model_path.parents else model_path}`",
+        "",
+        "| Command | Kind | Scope | Expected | Found | Verdict | Time (s) |",
+        "|---|---|---|---:|---:|---|---:|",
+    ]
+    for r in rows:
+        c, verdict, elapsed = r[0], r[1], r[2]
+        found = r[3] if len(r) > 3 else "-"
+        lines.append(f"| `{c['name']}` | {c['kind']} | `{c['scope']}` | {c['expect']} | {found} | {verdict} | {elapsed:.1f} |")
+    lines += ["", "## Instances and counterexamples (compact; only changed relations per state)", ""]
+    for name, tr in traces:
+        lines += [f"### `{name}`", "", "```text", tr, "```", ""]
+    output = Path(args.out)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines), encoding="utf-8")
+    print(f"\n{len(rows) - failures}/{len(rows)} commands matched expectations; results written to {args.out}")
+    return 0 if failures == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
