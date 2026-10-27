@@ -1,11 +1,16 @@
-# Pokeball Architecture — copyright and licensing notice
+# Ballarch Architecture — copyright and licensing notice
 
 Copyright © 2026 Vladislav Tomilov (4wl2d).
 
 Vladislav Tomilov is the creator and copyright holder of the original
-Pokeball Architecture material in this repository. `4wl2d` is his designated
+Ballarch Architecture material in this repository. `4wl2d` is his designated
 public pseudonym. Both identify the same person. The requested creator
 identification is `Vladislav Tomilov (4wl2d)`.
+
+Ballarch was published as "Pokeball Architecture" up to Core 1.5. The
+material and its copyright are the same; only the name changed. Ballarch is
+not affiliated with or endorsed by Nintendo, and no Nintendo trademark is used
+as a source identifier.
 
 ## Licensed material
 
@@ -16,8 +21,10 @@ diagrammatic material in this repository is licensed under the
 
 - the canonical Core specification;
 - developer overviews and translations;
-- the derived Agent Pack;
-- diagrams, examples, and illustrative pseudocode.
+- the agent skill in `skills/ballarch/`;
+- diagrams, and the examples and illustrative pseudocode inside these
+  documents (not the source files under `reference/`, `formal/` and
+  `tools/`).
 
 The complete legal code is reproduced in [`LICENSE`](LICENSE). This grant
 applies only to material and rights that the copyright holder is authorized
@@ -36,7 +43,7 @@ prior change notices. Do not imply endorsement by Vladislav Tomilov (4wl2d).
 
 Recommended attribution:
 
-> Pokeball Architecture by Vladislav Tomilov (4wl2d).
+> Ballarch Architecture by Vladislav Tomilov (4wl2d).
 > Copyright © 2026 Vladislav Tomilov (4wl2d).
 > Source: https://github.com/4wl2d/Pokeball
 > Licensed under CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
@@ -44,7 +51,7 @@ Recommended attribution:
 > Changes: describe your changes and retain any prior change notices.
 
 Equivalent attribution is permitted when it satisfies the license. For a
-portable copy of the Core or Agent Pack, retain this notice or reproduce the
+portable copy of the Core or the agent skill, retain this notice or reproduce the
 attribution information in another reasonable form.
 
 ## Legal boundary
@@ -54,8 +61,10 @@ implementations that do not reproduce protected expression are outside this
 copyright license. No patent license or patent non-assert covenant, and no
 permission to use any trademark as a source identifier, is granted.
 
-This repository currently contains no executable runtime or software library.
-Future software is not covered by CC BY 4.0 unless it is explicitly marked;
-it should receive a separate software license.
+The executable reference implementation and verification scripts in this
+repository have no software license yet. Software is not covered by CC BY 4.0
+unless it is explicitly marked; a separate software license remains pending.
+The root `LICENSE` file, which GitHub shows as the repository's license,
+covers the text and diagrams only.
 
 [cc-by-4.0]: https://creativecommons.org/licenses/by/4.0/

@@ -1,0 +1,44 @@
+# Structural checks of Ballarch rules R1, R2, R4 and R5 on the design read
+# before this script (its top module selected with `hierarchy -top`). Each check
+# fails with "Assertion failed" or a Yosys error; README.md says what each one
+# proves and the fixtures in lint/ show each one failing.
+
+# R2: no latch. proc itself rejects a latch inferred in always_comb ("Latch
+# inferred ... from always_comb process"); a latch from always @* or
+# always_latch becomes a latch cell, which must not exist.
+proc
+select -assert-none t:$dlatch t:$adlatch t:$dlatchsr t:$sr
+
+# R1: no signal has two drivers. Checked before opt can merge drivers, and again
+# after flatten, where drivers in different modules meet.
+check -assert
+flatten
+opt
+check -assert
+
+# The flip-flop types, and the cells that hold no state ($scopeinfo, which newer
+# Yosys versions leave after flatten, carries no logic at all).
+select -set ffs t:$dff t:$dffe t:$sdff t:$sdffe t:$sdffce t:$adff t:$adffe t:$aldff t:$aldffe t:$dffsr t:$dffsre
+select -set comb t:$not t:$pos t:$neg t:$and t:$or t:$xor t:$xnor t:$reduce_and t:$reduce_or t:$reduce_xor t:$reduce_xnor t:$reduce_bool t:$logic_not t:$logic_and t:$logic_or t:$shl t:$shr t:$sshl t:$sshr t:$shift t:$shiftx t:$lt t:$le t:$eq t:$ne t:$eqx t:$nex t:$ge t:$gt t:$add t:$sub t:$mul t:$div t:$mod t:$divfloor t:$modfloor t:$pow t:$fa t:$lcu t:$alu t:$macc t:$slice t:$concat t:$mux t:$bmux t:$pmux t:$demux t:$bwmux t:$bweqx t:$lut t:$sop t:$scopeinfo
+
+# R2, R4: every cell is one of those flip-flops or holds no state. Anything
+# else, for example a memory, a gate-level latch, a black box or a cell with no
+# definition, is rejected, so the flip-flops are the block's only storage.
+select -assert-none c:* @comb %d @ffs %d
+
+# R4, R5: every flip-flop is clocked by the rising edge of the clk input port,
+# so all state commits at one edge. Yosys stores the polarity as 1'1 or as the
+# integer 1, so it is compared as a number.
+select -assert-none @ffs @ffs i:clk %co1:+[CLK] %i r:CLK_POLARITY>0 %i %d
+
+# R5, R4: from an input other than rst_n, follow every path through cells,
+# stopping only at a flip-flop's clocked pins (CLK, D, EN, SRST). A path into an
+# asynchronous pin (ARST, SET, CLR, AD, ALOAD) continues to the flip-flop and its
+# output. Such a path must reach no output (R5: the output would follow the
+# input between edges), and no flip-flop at all (R4: state would change between
+# edges). rst_n may reach flip-flops on any pin, but an output only through one.
+select -set inputs i:* i:rst_n %d
+select -set through_clocked @inputs %co*:-$dff,$dffe,$sdff,$sdffe,$sdffce,$adff,$adffe,$aldff,$aldffe,$dffsr,$dffsre[CLK,D,EN,SRST]
+select -set from_reset i:rst_n %co*:-$dff,$dffe,$sdff,$sdffe,$sdffce,$adff,$adffe,$aldff,$aldffe,$dffsr,$dffsre
+select -assert-none @through_clocked @from_reset %u o:* %i
+select -assert-none @through_clocked @ffs %i

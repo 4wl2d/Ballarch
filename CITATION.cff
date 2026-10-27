@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: >-
+  If you discuss Ballarch, please cite it as below.
+  Text and diagrams are licensed under CC BY 4.0 (see NOTICE.md); the code
+  in this repository has no software license yet.
+title: "Ballarch Core 2.0: owners, obligations and honest outcomes (specification and reference implementations)"
+abstract: >-
+  Ballarch is an architecture for components that own state and call systems
+  that can fail, from hardware blocks and firmware to mobile apps, services,
+  workflows and AI-agent tools. Each piece of mutable state that Ballarch
+  governs has one owner that decides in pure functions. A runtime commits each
+  decision atomically before anything leaves, and gives every outbound call
+  exactly one outcome: Done, NotDone or Unknown. The outcome follows from two
+  boundaries in time, the commit and send horizons, and from the effect class
+  declared for the port: Safe, Idempotent or NonIdempotent. A timeout after an
+  effectful request may have been sent is never reported as NotDone without
+  evidence. The runtime, not feature code, owns retries, idempotency keys,
+  crash recovery and optional reconciliation. It derives a key for every call,
+  ties repeats to intents, refuses deadlines that outlive a declared
+  deduplication window, and, under the Durable profile, holds its store
+  exclusively. A knowledge algebra over Kleene's three-valued logic bounds
+  what an operation of several calls may claim, so that a settled composite
+  can answer its caller like one honest call, given honest adapters, absorbing
+  compensations and a durable call ledger. The distribution contains the
+  specification; reference implementations in Kotlin, C and SystemVerilog,
+  which check the outcome rules and the knowledge algebra at each level
+  separately (composition across levels is not tested); an Alloy model of the
+  call protocol; a language-neutral conformance-trace checker; and an agent
+  skill. Ballarch costs a runtime dependency, explicit stages and, under the
+  Durable profile, at least three durable writes per effectful call.
+version: 2.0.0-rc.1
+type: software
+license-url: "https://github.com/4wl2d/Pokeball/blob/master/NOTICE.md"
+authors:
+  - given-names: Vladislav
+    family-names: Tomilov
+    alias: 4wl2d
+repository-code: "https://github.com/4wl2d/Pokeball"
+keywords:
+  - software architecture
+  - hardware/software co-design
+  - fault tolerance
+  - idempotency
+  - three-valued logic
+  - output commit
+  - sagas
+  - state machines
+  - fault injection
+  - model checking

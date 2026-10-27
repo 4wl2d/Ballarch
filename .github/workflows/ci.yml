@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Kotlin reference, examples and rules
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reference/kotlin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test (architecture rules, adapter conformance, tutorial, knowledge algebra)
+        run: ./gradlew build checkModuleBoundaries
+      - name: Conformance traces pass the language-neutral oracles
+        run: python3 ../../tools/oracles.py ballarch-runtime/build/conformance-traces/*.jsonl
+      - name: The trace oracles detect seeded violations
+        run: python3 -m unittest discover -s ../../tools -p 'test_*.py'
+
+  firmware:
+    name: Firmware reference (C11)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reference/c
+    steps:
+      - uses: actions/checkout@v4
+      - name: gcc
+        run: make CC=gcc
+      - name: clang
+        run: make clean && make CC=clang
+      - name: AddressSanitizer and UndefinedBehaviorSanitizer
+        run: make sanitize
+
+  rtl:
+    name: Hardware reference (SystemVerilog)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reference/rtl
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog, Verilator and Yosys
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog verilator yosys
+      - run: make
+
+  alloy:
+    name: Alloy model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: bash formal/alloy/fetch-alloy.sh && python3 formal/alloy/run.py

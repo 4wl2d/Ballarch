@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Ballarch by 4wl2d</title>
+  <desc id="desc">A deep-blue banner for the Ballarch architecture. On the right, an arch stands over a ball. A timeline under it shows the two temporal boundaries of every interaction, commit and send, and three outcome marks: Done, NotDone and Unknown.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050A13"/>
+      <stop offset="0.58" stop-color="#0A1628"/>
+      <stop offset="1" stop-color="#0D2342"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="0.36" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#A5D0FF"/>
+      <stop offset="0.38" stop-color="#58A6FF"/>
+      <stop offset="0.8" stop-color="#1F6FEB"/>
+      <stop offset="1" stop-color="#0B3D91"/>
+    </radialGradient>
+    <linearGradient id="arch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C9D1D9"/>
+      <stop offset="1" stop-color="#6E7B8A"/>
+    </linearGradient>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#58A6FF" stroke-opacity="0.045"/>
+    </pattern>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#010409" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="420" rx="28" fill="url(#background)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#grid)"/>
+  <rect x="1" y="1" width="1198" height="418" rx="27" fill="none" stroke="#58A6FF" stroke-opacity="0.24"/>
+
+  <path d="M720 420L1200 58V420Z" fill="#1F6FEB" opacity="0.055"/>
+  <path d="M842 420L1200 154V420Z" fill="#58A6FF" opacity="0.035"/>
+  <line x1="723" y1="66" x2="723" y2="354" stroke="#58A6FF" stroke-opacity="0.14"/>
+
+  <g transform="translate(0 56)" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <text x="100" y="94" fill="#58A6FF" font-size="20" font-weight="650" letter-spacing="4.6">@4wl2d</text>
+    <text x="96" y="178" fill="#F0F6FC" font-size="72" font-weight="760" letter-spacing="-1.6">Ballarch</text>
+    <text x="100" y="228" fill="#C9D1D9" font-size="25" font-weight="600">Owners, obligations, honest outcomes</text>
+    <text x="100" y="262" fill="#8B949E" font-size="19" font-weight="500">One contract from registers to services</text>
+  </g>
+
+  <!-- Emblem: an arch over a ball. -->
+  <g transform="translate(962 0)" filter="url(#shadow)">
+    <path d="M-138 300V178A138 138 0 0 1 138 178V300H98V178A98 98 0 0 0 -98 178V300Z" fill="url(#arch)" opacity="0.92"/>
+    <path d="M-16 44h32l-6 34h-20z" fill="#F0F6FC" opacity="0.85"/>
+    <circle cx="0" cy="236" r="64" fill="url(#ball)"/>
+    <ellipse cx="-22" cy="206" rx="22" ry="10" fill="#F0F6FC" opacity="0.18" transform="rotate(-24 -22 206)"/>
+  </g>
+
+  <!-- Timeline: commit and send horizons, then the three outcomes. -->
+  <g font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="600">
+    <line x1="790" y1="338" x2="1134" y2="338" stroke="#58A6FF" stroke-opacity="0.55" stroke-width="2"/>
+    <line x1="828" y1="326" x2="828" y2="350" stroke="#F0F6FC" stroke-width="3"/>
+    <text x="828" y="372" fill="#C9D1D9" text-anchor="middle">commit</text>
+    <line x1="895" y1="326" x2="895" y2="350" stroke="#F0F6FC" stroke-width="3"/>
+    <text x="895" y="372" fill="#C9D1D9" text-anchor="middle">send</text>
+    <circle cx="1010" cy="338" r="9" fill="#58A6FF"/>
+    <circle cx="1052" cy="338" r="8" fill="#0A1628" stroke="#58A6FF" stroke-width="2.5"/>
+    <path d="M1094 329a9 9 0 0 1 0 18z" fill="#58A6FF"/>
+    <circle cx="1094" cy="338" r="8" fill="none" stroke="#58A6FF" stroke-width="2.5"/>
+    <text x="1052" y="372" fill="#8B949E" text-anchor="middle">Done · NotDone · Unknown</text>
+  </g>
+</svg>
