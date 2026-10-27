@@ -1,3 +1,14 @@
 .DS_Store
 __pycache__/
 *.py[cod]
+# Kotlin / Gradle
+reference/kotlin/**/build/
+reference/kotlin/.gradle/
+reference/kotlin/.kotlin/
+reference/kotlin/build/
+*.class
+# Alloy tool jar (fetched by formal/alloy/fetch-alloy.sh)
+formal/alloy/alloy.jar
+# C and RTL references
+reference/c/build/
+reference/rtl/build/
